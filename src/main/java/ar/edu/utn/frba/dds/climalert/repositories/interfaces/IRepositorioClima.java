@@ -6,5 +6,6 @@ import java.util.Optional;
 public interface IRepositorioClima {
 
   void guardar(RegistroClimatico registro);
+
   Optional<RegistroClimatico> obtenerUltimo();
 }
