@@ -1,9 +1,9 @@
 package ar.edu.utn.frba.dds.climalert.services;
 
-import ar.edu.utn.frba.dds.climalert.models.entities.interfaces.NotificadorAlerta;
-import ar.edu.utn.frba.dds.climalert.models.entities.interfaces.ProveedorClima;
+import ar.edu.utn.frba.dds.climalert.helpers.NotificadorAlerta;
+import ar.edu.utn.frba.dds.climalert.helpers.ProveedorClima;
 import ar.edu.utn.frba.dds.climalert.models.entities.classes.RegistroClimatico;
-import ar.edu.utn.frba.dds.climalert.repositories.RepositorioClimaMemo;
+import ar.edu.utn.frba.dds.climalert.repositories.interfaces.IRepositorioClima; // <-- Importar la interfaz
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 
@@ -12,27 +12,29 @@ public class ClimalertService {
 
   private final ProveedorClima proveedorClima;
   private final NotificadorAlerta notificador;
-  private final RepositorioClimaMemo repositorioClimaMemo;
+  private final IRepositorioClima repositorioClima; // <-- Usar la interfaz
 
   public ClimalertService(ProveedorClima proveedorClima,
                           NotificadorAlerta notificador,
-                          RepositorioClimaMemo repositorioClimaMemo) {
+                          IRepositorioClima repositorioClima) { // <-- Usar la interfaz
     this.proveedorClima = proveedorClima;
     this.notificador = notificador;
-    this.repositorioClimaMemo = repositorioClimaMemo;
+    this.repositorioClima = repositorioClima;
   }
 
-  public void RegistrarClima() {
+  public void registrarClima() {
     RegistroClimatico registro = this.proveedorClima.obtenerClimaActual();
-    this.repositorioClimaMemo.guardar(registro);
+    this.repositorioClima.guardar(registro);
   }
 
   public void procesarAlerta() {
-    Optional<RegistroClimatico> ultimoRegistro = this.repositorioClimaMemo.obtenerUltimo();
+    Optional<RegistroClimatico> ultimoRegistro = this.repositorioClima.obtenerUltimo();
 
     ultimoRegistro.ifPresent(registro -> {
-      if (registro.esAlerta()) {
+      if (registro.esAlerta() && !registro.isNotificada()) {
         this.notificador.enviarAlerta(registro);
+        registro.marcarComoNotificada();
+        System.out.println("Alerta enviada y registro marcado como notificado.");
       }
     });
   }
